@@ -15,7 +15,7 @@ app.configure ->
 
   app.use app.router
 
-  app.use express.static ''
+  app.use express.static 'static'
 
   app.use express.errorHandler()
 
