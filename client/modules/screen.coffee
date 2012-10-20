@@ -1,12 +1,12 @@
 define 'screen','jquery',(exports,$) ->
-  exports.screen=(name,x,y,w,h) ->
-    s=new Screen x,y,w,h
+  exports.screen=(name,container,x,y,w,h) ->
+    s=new Screen container,x,y,w,h
     screens[name]=s
     return s
 
   exports.get_screen=(name) -> screens[name]
 
-  Screen=(x,y,w,h) ->
+  Screen=(container,x,y,w,h) ->
     Layer=(name,z) ->
       @name= -> name
       @z_index= -> z
@@ -46,7 +46,7 @@ define 'screen','jquery',(exports,$) ->
         .css 'left',x+'px'
         .css 'top',y+'px'
         .css 'z-index',z
-        .appendTo $ '#canvas_container'
+        .appendTo container
       ctx=canvas.getContext '2d'
 
     @layer=(name,pos,ref_layer) ->
