@@ -1,3 +1,5 @@
+JQUERY_VERSION='1.7.1'
+
 window.require=(dependencies...,body) ->
   for dep in dependencies
     load_dep dep
@@ -52,26 +54,25 @@ load_dep=(name,callback) ->
   do_once[name]=true
 
   if name=='jquery'
-    url='https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'
+    url='https://ajax.googleapis.com/ajax/libs/jquery/'+JQUERY_VERISON+'/jquery.min.js'
     load_script url,(evt) ->
       if evt?
         window.jQuery.holdReady true
         modules['jquery']=window.jQuery
-        load_script 'js/jquery-ui-1.8.17.custom.min.js'
+        load_script 'js/jquery-ui.custom.min.js'
       else
-        load_script 'js/jquery-1.7.1.min.js', ->
+        load_script 'js/jquery.min.js', ->
           window.jQuery.holdReady true
           modules['jquery']=window.jQuery
-          load_script 'js/jquery-ui-1.8.17.custom.min.js'
+          load_script 'js/jquery-ui.custom.min.js'
 
-  else if name=='websocket'
+  else if name=='socket.io'
     load_script '/socket.io/socket.io.js', ->
       modules['websocket']=window.io
 
   else
-    load_script 'api/module/'+name, ->
+    load_script 'api/load/'+name, ->
       callback?(name)
 
 require 'jquery','init',($) ->
   $.holdReady false
-
