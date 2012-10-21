@@ -1,4 +1,4 @@
-JQUERY_VERSION='1.7.1'
+JQUERY_VERSION='1.8.2'
 
 window.require=(dependencies...,body) ->
   for dep in dependencies
@@ -59,12 +59,12 @@ load_dep=(name,callback) ->
       if evt?
         window.jQuery.holdReady true
         modules['jquery']=window.jQuery
-        load_script 'js/jquery-ui.custom.min.js'
+        load_script 'js/jquery-ui-1.9.0.custom.min.js'
       else
         load_script 'js/jquery.min.js', ->
           window.jQuery.holdReady true
           modules['jquery']=window.jQuery
-          load_script 'js/jquery-ui.custom.min.js'
+          load_script 'js/jquery-ui-1.9.0.custom.min.js'
 
   else if name=='socket.io'
     load_script '/socket.io/socket.io.js', ->
