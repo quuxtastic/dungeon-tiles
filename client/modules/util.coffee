@@ -15,6 +15,9 @@ define 'util',(exports) ->
   exports.stop_interval=(id) ->
     clearInterval id
 
-  exports.format=(s,args...) ->
+  exports.printf=(s,args...) ->
     cur_arg=0
     s.replace '%s', -> args[cur_arg++]
+
+  exports.format=(s,args) ->
+    s.replace /%(\w+)%/,(match,name) -> args[name]

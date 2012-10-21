@@ -1,4 +1,6 @@
 define 'ui','jquery','store',(exports,$,store) ->
+  exports.add_widget=(name,html) -> widgets[name]=html
+
   exports.create_window=(title,content,options) ->
     prefs=store.local.ns 'ui.prefs.window.'+name
     w=$ '<div id="window_'+name+'"></div>'
@@ -85,6 +87,8 @@ define 'ui','jquery','store',(exports,$,store) ->
 
   windows={}
   window_list_menu=null
+
+  widgets={}
 
   $ ->
     window_list_menu=$('<ul></ul>').menu

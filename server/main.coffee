@@ -1,5 +1,10 @@
 express=require 'express'
 http=require 'http'
+socket_io=require 'socket.io'
+fs=require 'fs'
+path=require 'path'
+
+conf=JSON.parse fs.readFileSync path.join(process.cwd(),'conf/server.json'),'utf8'
 
 app=express()
 server=http.createServer app
@@ -19,5 +24,8 @@ app.configure ->
 
   app.use express.errorHandler()
 
-server.listen 8080
+for filename in fs.readdirSync path.join process.cwd(),'modules'
+  obj=require path.join process.cwd(),'modules',name
+  obj.initialize app,server,conf[path.basename(filename)]
 
+server.listen conf.listen_port

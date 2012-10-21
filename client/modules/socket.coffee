@@ -10,4 +10,3 @@ define 'socket','socket.io',(exports,io) ->
       create_callback null,err
     socket.on 'connect', ->
       create_callback this
-

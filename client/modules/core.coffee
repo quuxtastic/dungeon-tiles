@@ -74,5 +74,5 @@ load_dep=(name,callback) ->
     load_script 'api/load/'+name, ->
       callback?(name)
 
-require 'jquery','init',($) ->
+require 'jquery','ui','init',($) ->
   $.holdReady false
