@@ -61,7 +61,7 @@ load_dep=(name,callback) ->
         modules['jquery']=window.jQuery
         load_script 'js/jquery-ui-1.9.0.custom.min.js'
       else
-        load_script 'js/jquery.min.js', ->
+        load_script 'js/jquery-1.8.2.min.js', ->
           window.jQuery.holdReady true
           modules['jquery']=window.jQuery
           load_script 'js/jquery-ui-1.9.0.custom.min.js'

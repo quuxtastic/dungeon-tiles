@@ -1,5 +1,5 @@
 define 'socket','socket.io',(exports,io) ->
-  @socket=(namespace,callback) -> new Socket namespace,callback
+  exports.socket=(namespace,callback) -> new Socket namespace,callback
 
   Socket=(namespace,create_callback) ->
     @send=(msg,data) -> socket.send msg,data
