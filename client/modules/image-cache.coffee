@@ -15,4 +15,3 @@ define 'image-cache','jquery',(exports,$) ->
     exports.load_url 'data:image/gif;base64,'+base64,null,callback
 
   cache={}
-

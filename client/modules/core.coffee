@@ -1,5 +1,3 @@
-JQUERY_VERSION='1.8.2'
-
 window.require=(dependencies...,body) ->
   for dep in dependencies
     load_dep dep
@@ -20,7 +18,7 @@ window.require=(dependencies...,body) ->
 window.define=(name,dependencies...,body) ->
   require dependencies...,(deps...) ->
     exports={}
-    body exports,deps...
+    body?(exports,deps...)
 
     modules[name]=exports
 
@@ -34,8 +32,8 @@ load_script=(url,callback) ->
   tag.src=url
   onload=(evt) ->
     if evt.type=='load'
-      this.fired=true
-      evt.srcElement.removeListener 'load',onload,false
+      onload.fired=true
+      evt.srcElement.removeEventListener 'load',onload,false
       callback?(evt)
   tag.addEventListener 'load',onload,false
 
@@ -43,7 +41,8 @@ load_script=(url,callback) ->
 
   ontimeout= ->
     if not onload.fired
-      tag.srcElement.removeListener 'load',onload,false
+      console.log 'Failed to load '+url
+      tag.removeEventListener 'load',onload,false
       callback?(null)
   window.setTimeout ontimeout,1000
 
@@ -54,7 +53,7 @@ load_dep=(name,callback) ->
   do_once[name]=true
 
   if name=='jquery'
-    url='https://ajax.googleapis.com/ajax/libs/jquery/'+JQUERY_VERISON+'/jquery.min.js'
+    url='https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js'
     load_script url,(evt) ->
       if evt?
         window.jQuery.holdReady true

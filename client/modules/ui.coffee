@@ -1,11 +1,26 @@
-define 'ui','jquery','store',(exports,$,store) ->
+define 'ui','jquery','store','util',(exports,$,store,util) ->
+  class Window
+    constructor: (@_root) ->
+
+    get: (name) -> @_root.find('[name="'+name+'"]').val()
+    set: (name,value) -> @_root.find('[name="'+name+'"]').val value
+
+    find: (selector) -> @_root.find selector
+
+    show: -> @_root.show()
+    hide: -> @_root.hide()
+
+
+
+
+
   exports.add_widget=(name,html) -> widgets[name]=html
 
   exports.create_window=(title,content,options) ->
     prefs=store.local.ns 'ui.prefs.window.'+name
-    w=$ '<div id="window_'+name+'"></div>'
-      .attr 'title',title
-      .append content
+    w=$('<div id="window_'+name+'"></div>')
+      .attr('title',title)
+      .append(content)
       .dialog
         autoOpen:false
         modal:options.modal
@@ -17,24 +32,23 @@ define 'ui','jquery','store',(exports,$,store) ->
 
     if options.has_list_entry
       w
-        .on 'close', ->
-          window_list_menu.option title,null
-        .on 'open', ->
-          window_list_menu.option title,$(this)
+        .on('close', ->
+          window_list_menu.option title,null)
+        .on('open', ->
+          window_list_menu.option title,$(this))
 
       windows[options.name]=w
 
     if options.save_state
-      w
-        .option 'height',prefs.get('h','auto')
-        .option 'width' prefs.get('w','auto')
-        .option 'position' prefs.get('pos','center')
-        .on 'dragStop',(event,ui) ->
-          prefs.put 'pos',ui.position
-        .on 'resizeStop',(event,ui) ->
+      w.option('height',prefs.get('h','auto'))
+        .option('width',prefs.get('w','auto'))
+        .option('position',prefs.get('pos','center'))
+        .on('dragStop',(event,ui) ->
+          prefs.put 'pos',ui.position)
+        .on('resizeStop',(event,ui) ->
           prefs.put 'pos',ui.position
           prefs.put 'w',ui.size.width
-          prefs.put 'h',ui.size.height
+          prefs.put 'h',ui.size.height)
 
     return w
 
@@ -43,18 +57,13 @@ define 'ui','jquery','store',(exports,$,store) ->
   exports.windows= -> (k for k of windows)
 
   exports.create_message=(title,message,icon_type) ->
-    content=$ '<p></p>'
-      .append $ '<span></span>'
-        .class 'ui-icon'
-        .class icon_type
-        .css 'float','left'
-        .css 'margin','0 7px 50px 0'
-      .append message
-    exports.create_window title,content,
-      modal:true
-      can_close:false
-      buttons:
-        'OK': -> $(this).dialog 'close'
+    exports.widget 'message_dlg',{'icon':icon_type},(widget) ->
+      widget.append message
+      exports.create_window title,widget,
+        modal:true
+        can_close:false
+        buttons:
+          'OK': -> $(this).dialog 'close'
 
   exports.error=(title,message) ->
     exports.create_message title,message,'ui-icon-alert'
@@ -65,25 +74,30 @@ define 'ui','jquery','store',(exports,$,store) ->
   exports.create_prompt=(title,message,buttons,fields) ->
     fieldset=$ '<fieldset></fieldset>'
     for k,v of fields
-      $ '<label>'+v+'</label>'
-        .attr 'for',k
-        .appendTo fieldset
-      $ '<input type="text" name="'+k+'" id="'+k+'"/>'
-        .class 'text'
-        .class 'ui-widget-content'
-        .class 'ui-corner-all'
+      $('<label>'+v+'</label>')
+        .attr('for',k)
+        .appendTo(fieldset)
+      $('<input type="text" name="'+k+'" id="'+k+'"/>')
+        .class('text')
+        .class('ui-widget-content')
+        .class('ui-corner-all')
 
-    content=$ '<div></div>'
-      .attr 'title',title
-      .append $ '<p>'+message+'</p>'
-        .css 'border','1px solid transparent'
-        .css 'padding','0.3em'
-      .append $ '<form></form>'
-        .append fieldset
-    exports.create_window title,content,
-      modal:true
-      can_close:false
-      buttons:buttons
+    exports.widget 'form_dlg',(widget) ->
+      widget.find('fieldset').append fieldset
+      exports.create_window title,widget,
+        modal:true
+        can_close:false
+        buttons:buttons
+
+  exports.widget=(name,arg_map=null,callback) ->
+    if widgets[name]
+      callback $('<div></div>')
+        .html(util.format widgets[name],arg_map)
+    else
+      require 'widget/'+name,(obj) ->
+        widgets[name]=obj.html
+        callback $('<div></div>')
+          .html(util.format obj.html,arg_map)
 
   windows={}
   window_list_menu=null

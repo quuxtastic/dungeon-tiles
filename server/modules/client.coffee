@@ -1,22 +1,24 @@
 path=require 'path'
 fs=require 'fs'
 proc=require 'child_process'
+mkdirp=require 'mkdirp'
 
-init_modules=[]
-exports.register=(name) ->
-  init_modules.push name
+mod_define module,(app,server,options) ->
+  init_modules=[]
+  exports.register=(name) ->
+    init_modules.push name
 
-exports.initialize=(app,server,options) ->
   src_path=path.join process.cwd(),'client/modules'
   out_path=path.join process.cwd(),'var/src'
+  mkdirp.sync out_path
 
-  app.get 'api/load/init',(req,res,next) ->
+  app.get '/api/load/init',(req,res,next) ->
     res.set 'Content-Type','text/javascript'
-    res.write "(function() {define('init',"+init_modules.join(',')+");})();\n"
+    res.send "(function() {define('init',\""+init_modules.join('\",\"')+"\");})();\n"
 
-  app.get 'api/load/:name',(req,res,next) ->
-    compiled=path.join out_path,req.name+'.js'
-    source=path.join src_path,req.name+'.coffee'
+  app.get '/api/load/:name',(req,res,next) ->
+    compiled=path.join out_path,req.params.name+'.js'
+    source=path.join src_path,req.params.name+'.coffee'
 
     fs.stat source,(err,src_stats) ->
       if err
@@ -24,7 +26,7 @@ exports.initialize=(app,server,options) ->
         return
       fs.stat compiled,(err,comp_stats) ->
         if err or src_stats.mtime>comp_stats.mtime
-          proc.exec 'coffee -co '+compiled+' '+source,(err,stdout,stderr) ->
+          proc.exec 'coffee -co '+out_path+' '+source,(err,stdout,stderr) ->
             if err
               next err
               return

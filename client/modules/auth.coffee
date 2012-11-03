@@ -22,10 +22,10 @@ define 'auth','server','store',(exports,server,store) ->
 
   login_buttons=
     'Log In':(frm) ->
-      args=
-        username:frm.find('[name="username"]').val()
-        password:frm.find('[name="password"]').val()
-      server.request 'login',args,(response) ->
+      #args=
+      #  username:frm.find('[name="username"]').val()
+      #  password:frm.find('[name="password"]').val()
+      server.post '/login',frm,(response) ->
         if response.key?
           login_dlg.close()
           login_success
