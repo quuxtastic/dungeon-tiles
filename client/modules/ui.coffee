@@ -1,114 +1,102 @@
-define 'ui','jquery','store','util',(exports,$,store,util) ->
-  class Window
-    constructor: (@_root) ->
-
-    get: (name) -> @_root.find('[name="'+name+'"]').val()
-    set: (name,value) -> @_root.find('[name="'+name+'"]').val value
-
-    find: (selector) -> @_root.find selector
-
-    show: -> @_root.show()
-    hide: -> @_root.hide()
-
-
-
-
-
-  exports.add_widget=(name,html) -> widgets[name]=html
-
-  exports.create_window=(title,content,options) ->
-    prefs=store.local.ns 'ui.prefs.window.'+name
-    w=$('<div id="window_'+name+'"></div>')
-      .attr('title',title)
-      .append(content)
-      .dialog
-        autoOpen:false
-        modal:options.modal
-        draggable:not options.fixed
-        resizable:not options.fixed
-        closeOnEscape:options.can_close
-        dialogClass:if options.can_close then '' else 'no-close'
-        buttons:if options.buttons then options.buttons else {}
-
-    if options.has_list_entry
-      w
-        .on('close', ->
-          window_list_menu.option title,null)
-        .on('open', ->
-          window_list_menu.option title,$(this))
-
-      windows[options.name]=w
-
-    if options.save_state
-      w.option('height',prefs.get('h','auto'))
-        .option('width',prefs.get('w','auto'))
-        .option('position',prefs.get('pos','center'))
-        .on('dragStop',(event,ui) ->
-          prefs.put 'pos',ui.position)
-        .on('resizeStop',(event,ui) ->
-          prefs.put 'pos',ui.position
-          prefs.put 'w',ui.size.width
-          prefs.put 'h',ui.size.height)
-
-    return w
-
-  exports.get_window=(name) -> windows[name]
-
-  exports.windows= -> (k for k of windows)
-
-  exports.create_message=(title,message,icon_type) ->
-    exports.widget 'message_dlg',{'icon':icon_type},(widget) ->
-      widget.append message
-      exports.create_window title,widget,
-        modal:true
-        can_close:false
-        buttons:
-          'OK': -> $(this).dialog 'close'
-
-  exports.error=(title,message) ->
-    exports.create_message title,message,'ui-icon-alert'
-
-  exports.info=(title,message) ->
-    exports.create_message title,message,'ui-icon-info'
-
-  exports.create_prompt=(title,message,buttons,fields) ->
-    fieldset=$ '<fieldset></fieldset>'
-    for k,v of fields
-      $('<label>'+v+'</label>')
-        .attr('for',k)
-        .appendTo(fieldset)
-      $('<input type="text" name="'+k+'" id="'+k+'"/>')
-        .class('text')
-        .class('ui-widget-content')
-        .class('ui-corner-all')
-
-    exports.widget 'form_dlg',(widget) ->
-      widget.find('fieldset').append fieldset
-      exports.create_window title,widget,
-        modal:true
-        can_close:false
-        buttons:buttons
-
-  exports.widget=(name,arg_map=null,callback) ->
-    if widgets[name]
-      callback $('<div></div>')
-        .html(util.format widgets[name],arg_map)
-    else
-      require 'widget/'+name,(obj) ->
-        widgets[name]=obj.html
-        callback $('<div></div>')
-          .html(util.format obj.html,arg_map)
-
+define 'ui','jquery','store','util','server',(exports,$,store,util,srv) ->
   windows={}
-  window_list_menu=null
 
-  widgets={}
+  class Window
+    constructor: (@_module,mixin_options) ->
+      opts=util.merge @_module.ui_options,mixin_options
+      @_dlg=$('<div id="window+'+util.uid()+'"></div>')
+        .html @_module._html
+        .dialog
+          autoOpen:false
+          title:opts.title
+          modal:opts.modal
+          draggable:not opts.fixed
+          resizable:not opts.fixed
+          closeOnEscape:opts.can_close
+          dialogClass:if opts.can_close then '' else 'no-close'
+          width:'auto'
+          height:'auto'
+          position:'center'
+
+      if opts.show_in_window_list
+        @_dlg.on 'close', -> exports.window('window_list').remove this
+        @_dlg.on 'open', -> exports.window('window_list').add this,opts.title
+
+      if opts.save_state
+        prefs=store.local.ns 'ui.prefs.window.'+@_module.name
+        @_dlg.option 'height',prefs.get 'h','auto'
+          .option 'width,'prefs.get 'w','auto'
+          .option 'position',prefs.get 'pos','center'
+          .on 'dragStop',(event,ui) -> prefs.put 'pos',ui.position
+          .on 'resizeStop',(event,ui) ->
+            prefs.put 'pos',ui.position
+            prefs.put 'w',ui.size.width
+            prefs.put 'h',ui.size.height
+
+      @_name=@_module.initialize this,opts
+      windows[name]=this
+
+    name: -> @_name
+
+    get: (name) -> @_dlg.find('[name="'+name+'"]').val()
+    set: (name,value) -> @_dlg.find('[name="'+name+'"]').val value
+
+    find: (selector) -> @_dlg.find selector
+
+    open: -> @_dlg.dialog 'open'
+    close: -> @_dlg.dialog 'close'
+
+    focus: -> @_dialog.dialog 'moveToTop'
+
+    title: (new_title) -> @_dlg.option 'title',new_title
+
+    buttons: (btnmap) ->
+      buttonset=@_dlg.parent().find('.ui-dialog-buttonset')
+      for display_text,click_callback of btnmap
+        id='btn'+util.uid()
+        btn=$ '<span class="ui-button-text dynamic-button" id="'+id+'">'+display_text+'</span>'
+        buttonset.append btn
+        btn.button().click -> click_callback this
+
+    button: (name,callback) -> @buttons {name:callback}
+
+    on: (event,callback) ->
+      @_dlg.on event,(event,ui) ->
+        callback event,ui,this
+
+  widget_cache={}
+
+  exports.create_window=(widget_name,mixin_options={},callback=null) ->
+    if widget_cache[widget_name]?
+      callback?(new Window widget_cache[widget_name],mixin_options)
+    else
+      require 'widgets/'+widget_name,(widget) ->
+        srv.html '/widgets/'+widget_name+'.html',(html) ->
+          widget._html=html
+          widget_cache[widget_name]=widget
+          callback?(new Window widget,mixin_options)
+
+  exports.window=(name) -> windows[name]
+
+  exports.message=(title,message,icon_type,close_callback=null) ->
+    opts=
+      title:title
+      icon:icon_type
+      message:message
+      on_close:close_callback
+    exports.create_window 'message-dialog',opts
+
+  exports.error=(title,message,close_callback=null) ->
+    exports.message title,message,'ui-icon-alert',close_callback
+
+  exports.prompt=(title,message,fields,can_cancel=true,callback) ->
+    opts=
+      title:title
+      message:message
+      fields:fields
+      callback:callback
+      can_cancel:can_cancel
+    exports.create_window 'form-dialog',opts
 
   $ ->
-    window_list_menu=$('<ul></ul>').menu
-      select:(event,ui) -> ui.item.dialog 'focus'
-    exports.create_window 'Window List',window_list_menu,
-      name:'window-list'
-      modal:false,
-      can_close:false,
-      save_state:true
+    exports.create_window 'window_list'

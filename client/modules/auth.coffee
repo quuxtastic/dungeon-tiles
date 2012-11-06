@@ -1,8 +1,10 @@
-define 'auth','server','store',(exports,server,store) ->
+define 'auth','server','store','ui',(exports,server,store,ui) ->
+  auth_data=store.session.ns 'auth'
+
   exports.current_user= -> auth_data.get 'user'
 
   exports.login=(callback) ->
-    if not auth_data.get 'key'
+    if not auth_data.get 'user'
       try_login callback
     else
       callback
@@ -12,28 +14,22 @@ define 'auth','server','store',(exports,server,store) ->
     auth_data.remove 'key'
     auth_data.remove 'user'
 
-  login_success=(username,key) ->
+  login_success=(username) ->
     auth_data.put 'user',username
-    auth_data.put 'key',key
     for f in login_callbacks
       f username,key
     login_callbacks=[]
     trying_login=false
 
-  login_buttons=
-    'Log In':(frm) ->
-      #args=
-      #  username:frm.find('[name="username"]').val()
-      #  password:frm.find('[name="password"]').val()
-      server.post '/login',frm,(response) ->
-        if response.key?
-          login_dlg.close()
-          login_success
+  ui.create_window 'login',
+    callback: (dlg,username,password) ->
+      server.post '/login',{username:username,password:password},(response) ->
+        if not response.error?
+          dlg.close()
+          dlg.error ''
+          login_success password
         else
-          ui.error 'Login error',response.text
-  login_dlg=ui.create_prompt 'Log In','Enter your login credentials',login_buttons,
-    'username':'User name'
-    'password':'Password'
+          dlg.error response.error
 
   trying_login=false
   try_login=(callback) ->
@@ -42,6 +38,6 @@ define 'auth','server','store',(exports,server,store) ->
     if not trying_login
       trying_login=true
 
-      login_dlg.open()
+      ui.windows('login').open()
 
-  auth_data=store.session.ns 'auth'
+

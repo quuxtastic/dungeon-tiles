@@ -21,3 +21,15 @@ define 'util',(exports) ->
 
   exports.format=(s,args) ->
     s.replace /%(\w+)%/,(match,name) -> args[name]
+
+  uid_counter=0
+  exports.uid= -> uid_counter++
+
+  exports.merge=(sources...) ->
+    out={}
+    for obj in sources
+      for k,v of obj
+        if obj.hasOwnProperty k
+          out[k]=v
+
+    return out

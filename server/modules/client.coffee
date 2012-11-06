@@ -16,7 +16,7 @@ mod_define module,(app,server,options) ->
     res.set 'Content-Type','text/javascript'
     res.send "(function() {define('init',\""+init_modules.join('\",\"')+"\");})();\n"
 
-  app.get '/api/load/:name',(req,res,next) ->
+  app.get '/api/load/*',(req,res,next) ->
     compiled=path.join out_path,req.params.name+'.js'
     source=path.join src_path,req.params.name+'.coffee'
 

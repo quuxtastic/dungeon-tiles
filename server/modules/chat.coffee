@@ -1,5 +1,3 @@
-rand=require '../lib/rand'
-
 mod_define module,'socket','client','auth',(app,server,options,socket,client,auth) ->
   class Room
     constructor: (@room_name,do_auth=true) ->
@@ -11,6 +9,9 @@ mod_define module,'socket','client','auth',(app,server,options,socket,client,aut
         for username,conn of @current_members
           if conn.get('nick')==nick
             return username
+
+      parse_msg=(text) ->
+        return text
 
       @my_socket=socket.channel 'chat/'+@room_name,
         authorize: (handshake,callback) ->
@@ -162,5 +163,8 @@ mod_define module,'socket','client','auth',(app,server,options,socket,client,aut
       res.send 200
     else
       next 'You are not the administrator of room '+req.query.name
+
+  app.get '/api/chat/list',auth.verify,(req,res,next) ->
+    res.send exports.rooms
 
   client.register 'chat'

@@ -5,9 +5,11 @@ define 'socket','socket.io',(exports,io) ->
       @socket.on 'error',(err) ->
         create_callback null,err
       @socket.on 'connect', ->
-        create_callback, @this
+        create_callback, this
 
-    send: (msg,data) -> @socket.send msg,data
+    send: (msg,data) -> @socket.emit msg,data
     on: (msg,callback) -> @socket.on msg,callback
+
+    close: -> @socket.disconnect()
 
   exports.socket=(namespace,callback) -> new Socket namespace,callback
