@@ -5,12 +5,11 @@ path=require 'path'
 
 core=require './core'
 
-conf=JSON.parse fs.readFileSync path.join(process.cwd(),'conf/server.json'),'utf8'
-
-conf.listen_port=process.env.PORT
-
 app=express()
 server=http.createServer app
+
+core._set_server server
+core._set_app app
 
 app.configure ->
   sessionStore=new express.session.MemoryStore()
@@ -32,8 +31,6 @@ app.configure ->
   app.use express.errorHandler()
 
 for filename in fs.readdirSync path.join process.cwd(),'server','modules'
-  obj=require path.join process.cwd(),'server','modules',filename
+  require path.join process.cwd(),'server','modules',filename
 
-core.init_modules app,server,conf
-
-server.listen conf.listen_port
+server.listen core.conf('server').port
