@@ -1,4 +1,4 @@
-define 'message-dialog',(exports) ->
+define 'widgets/message-dialog',(exports) ->
   exports.ui_options=
     modal:true
     can_close:false

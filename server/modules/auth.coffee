@@ -16,14 +16,25 @@ users=
 check_valid_credentials=(username,password,callback) ->
   if not users[username]?
     callback 'Unknown user "'+username+'"'
+  else if not password==users[username].password
+    callback 'Bad password'
+  else
+    callback()
 
-  bcrypt.compare password,users[username].password,(err,valid) ->
-    if err
-      callback err
-    if not valid
-      callback 'Bad password'
-    else
-      callback()
+  #bcrypt.compare password,users[username].password,(err,valid) ->
+  #  if err
+  #    callback err
+  #  if not valid
+  #    callback 'Bad password'
+  #  else
+  #    callback()
+
+login_listeners=[]
+logout_listeners=[]
+exports.on_login=(callback) ->
+  login_listeners.push callback
+exports.on_logout=(callback) ->
+  logout_listeners.push callback
 
 app.post '/api/login',(req,res,next) ->
   if not req.body.username? or not req.body.password?
@@ -34,15 +45,15 @@ app.post '/api/login',(req,res,next) ->
       next err
     else
       req.session.user=req.body.username
-      for callback in login_callbacks
+      for callback in login_listeners
         callback exports.current_user(req)
-      res.send 200
+      res.send {}
 
 app.get '/api/logout',exports.verify,(req,res,next) ->
-  for callback in logout_callbacks
+  for callback in logout_listeners
     callback exports.current_user(req)
   req.session.destroy()
-  res.send 200
+  res.send {}
 
 check_valid_session=(credentials,callback) ->
   valid=credentials? and credentials.user?
@@ -73,10 +84,3 @@ exports.authenticate_websocket=(handshake,callback) ->
         check_valid_session session,callback
 
 exports.current_user=(req) -> users[req.session.user]
-
-login_listeners=[]
-logout_listeners=[]
-exports.on_login=(callback) ->
-  login_listeners.push callback
-exports.on_logout=(callback) ->
-  logout_listeners.push callback

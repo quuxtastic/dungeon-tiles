@@ -5,7 +5,7 @@ define 'ui','jquery','store','util','server',(exports,$,store,util,srv) ->
     constructor: (@_module,mixin_options) ->
       opts=util.merge @_module.ui_options,mixin_options
       @_dlg=$('<div id="window+'+util.uid()+'"></div>')
-        .html @_module._html
+        .html(@_module._html)
         .dialog
           autoOpen:false
           title:opts.title
@@ -13,7 +13,7 @@ define 'ui','jquery','store','util','server',(exports,$,store,util,srv) ->
           draggable:not opts.fixed
           resizable:not opts.fixed
           closeOnEscape:opts.can_close
-          dialogClass:if opts.can_close then '' else 'no-close'
+          dialogClass:(if opts.can_close then null else 'no-close')
           width:'auto'
           height:'auto'
           position:'center'
@@ -24,14 +24,14 @@ define 'ui','jquery','store','util','server',(exports,$,store,util,srv) ->
 
       if opts.save_state
         prefs=store.local.ns 'ui.prefs.window.'+@_module.name
-        @_dlg.option 'height',prefs.get 'h','auto'
-          .option 'width,'prefs.get 'w','auto'
-          .option 'position',prefs.get 'pos','center'
-          .on 'dragStop',(event,ui) -> prefs.put 'pos',ui.position
-          .on 'resizeStop',(event,ui) ->
-            prefs.put 'pos',ui.position
-            prefs.put 'w',ui.size.width
-            prefs.put 'h',ui.size.height
+        @_dlg.dialog 'option','height',prefs.get('h','auto')
+        @_dlg.dialog 'option','width',prefs.get('w','auto')
+        @_dlg.dialog 'option','position',prefs.get('pos','center')
+        @_dlg.on 'dragStop',(event,ui) -> prefs.put('pos',ui.position)
+        @_dlg.on 'resizeStop',(event,ui) ->
+          prefs.put 'pos',ui.position
+          prefs.put 'w',ui.size.width
+          prefs.put 'h',ui.size.height
 
       @_name=@_module.initialize this,opts
       windows[name]=this
@@ -46,9 +46,9 @@ define 'ui','jquery','store','util','server',(exports,$,store,util,srv) ->
     open: -> @_dlg.dialog 'open'
     close: -> @_dlg.dialog 'close'
 
-    focus: -> @_dialog.dialog 'moveToTop'
+    focus: -> @_dlg.dialog 'moveToTop'
 
-    title: (new_title) -> @_dlg.option 'title',new_title
+    title: (new_title) -> @_dlg.dialog 'option','title',new_title
 
     buttons: (btnmap) ->
       buttonset=@_dlg.parent().find('.ui-dialog-buttonset')
@@ -66,19 +66,34 @@ define 'ui','jquery','store','util','server',(exports,$,store,util,srv) ->
 
   widget_cache={}
 
+  on_create={}
   exports.create_window=(widget_name,mixin_options={},callback=null) ->
     if widget_cache[widget_name]?
-      callback?(new Window widget_cache[widget_name],mixin_options)
+      wnd=new Window widget_cache[widget_name],mixin_options
+      callback?(wnd)
+      if on_create[wnd.name()]?
+        for f in on_create[wnd.name()]
+          f wnd
     else
       require 'widgets/'+widget_name,(widget) ->
         srv.html '/widgets/'+widget_name+'.html',(html) ->
           widget._html=html
           widget_cache[widget_name]=widget
-          callback?(new Window widget,mixin_options)
+          wnd=new Window widget,mixin_options
+          callback?(wnd)
+          if on_create[wnd.name()]?
+            for f in on_create[wnd.name()]
+              f wnd
 
-  exports.window=(name) -> windows[name]
+  exports.window=(name,callback) ->
+    if windows[name]
+      callback windows[name]
+    else
+      if not on_create[name]?
+        on_create[name]=[]
+      on_create[name].push callback
 
-  exports.message=(title,message,icon_type,close_callback=null) ->
+  exports.message=(title,message,icon_type,close_callback) ->
     opts=
       title:title
       icon:icon_type
@@ -86,7 +101,7 @@ define 'ui','jquery','store','util','server',(exports,$,store,util,srv) ->
       on_close:close_callback
     exports.create_window 'message-dialog',opts
 
-  exports.error=(title,message,close_callback=null) ->
+  exports.error=(title,message,close_callback) ->
     exports.message title,message,'ui-icon-alert',close_callback
 
   exports.prompt=(title,message,fields,can_cancel=true,callback) ->

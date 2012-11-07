@@ -16,6 +16,8 @@ window.require=(dependencies...,body) ->
   iid=setInterval ready_interval,100
 
 window.define=(name,dependencies...,body) ->
+  console.log name+' dependencies:'
+  console.dir [dependencies...]
   require dependencies...,(deps...) ->
     exports={}
     body?(exports,deps...)

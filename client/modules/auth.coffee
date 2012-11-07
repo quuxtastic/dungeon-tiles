@@ -14,22 +14,13 @@ define 'auth','server','store','ui',(exports,server,store,ui) ->
     auth_data.remove 'key'
     auth_data.remove 'user'
 
+  login_callbacks=[]
   login_success=(username) ->
     auth_data.put 'user',username
     for f in login_callbacks
       f username,key
     login_callbacks=[]
     trying_login=false
-
-  ui.create_window 'login',
-    callback: (dlg,username,password) ->
-      server.post '/login',{username:username,password:password},(response) ->
-        if not response.error?
-          dlg.close()
-          dlg.error ''
-          login_success password
-        else
-          dlg.error response.error
 
   trying_login=false
   try_login=(callback) ->
@@ -38,6 +29,14 @@ define 'auth','server','store','ui',(exports,server,store,ui) ->
     if not trying_login
       trying_login=true
 
-      ui.windows('login').open()
+      ui.window 'login',(wnd) -> wnd.open()
 
-
+  ui.create_window 'login',
+    callback: (dlg,username,password) ->
+      server.post 'login',{username:username,password:password},(response) ->
+        if not response.error?
+          dlg.close()
+          dlg.error ''
+          login_success password
+        else
+          dlg.error response.error

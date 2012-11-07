@@ -1,9 +1,10 @@
-define 'window_list','jquery',(exports,$) ->
+define 'widgets/window_list','jquery',(exports,$) ->
   exports.ui_options=
     modal:false
     can_close:false
     save_state:true
     show_in_window_list:false
+    title:'Window List'
 
   exports.initialize=(dlg) ->
     window_list=dlg.find '.window-list'
@@ -14,12 +15,14 @@ define 'window_list','jquery',(exports,$) ->
     dlg.add=(wnd,title) ->
       item=$('<a href="#">'+title+'</a>').data 'wnd',wnd
       $('<li></li>')
-        .append item
+        .append(item)
         .appendTo window_list
 
     dlg.remove=(wnd) ->
       window_list.find('li').each (item) ->
         if item.find('a').data('wnd')==wnd
           item.detach()
+
+    dlg.open()
 
     return 'window_list'

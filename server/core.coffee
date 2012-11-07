@@ -19,29 +19,3 @@ exports.server= -> server
 exports.app= -> app
 
 exports.conf=(ns) -> conf[ns]
-
-#global.mod_define=(obj,deps...,body) ->
-  #name=path.basename obj.filename,'.coffee'
-  #console.log name
-  #modules[name]=
-    #obj:obj
-    #exports:null
-    #init:body
-    #deps:[deps...]
-    #initialized:false
-    #name:name
-
-#init_module=(data,app,server,conf) ->
-  #if not data.initialized
-    #dep_objs=[init_module(modules[dep],app,server,conf) for dep in data.deps]
-#
-    #data.init app,server,conf[data.name],dep_objs...
-    #data.initialized=true
-#
-  #console.log data.obj.exports
-#
-  #return data.obj
-#
-#exports.init_modules=(app,server,conf) ->
-  #for name,module_data of modules
-    #init_module module_data,app,server,conf

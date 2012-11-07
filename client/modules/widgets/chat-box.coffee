@@ -1,4 +1,4 @@
-define 'chat-box','jquery','socket',(exports,$,socket) ->
+define 'widgets/chat-box','jquery','socket',(exports,$,socket) ->
   exports.ui_options=
     modal:false
     can_close:true

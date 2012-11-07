@@ -1,4 +1,4 @@
-define 'prompt-dialog','jquery',(exports,$) ->
+define 'widgets/prompt-dialog','jquery',(exports,$) ->
   exports.ui_options=
     can_close:false
     modal:true
@@ -63,12 +63,12 @@ define 'prompt-dialog','jquery',(exports,$) ->
     fieldset=dlg.find 'fieldset'
     for field_name,properties of options.fields
       $('<label>'+properties.display+'</label>')
-        .attr 'for',field_name
+        .attr('for',field_name)
         .appendTo fieldset
 
       $('<input type="text" name="'+field_name+'"/>')
-        .addClass 'text ui-widget-content ui-corner-all'
-        .data 'properties',properties
+        .addClass('text ui-widget-content ui-corner-all')
+        .data('properties',properties)
         .appendTo fieldset
 
     dlg.open()

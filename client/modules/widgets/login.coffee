@@ -1,4 +1,4 @@
-define 'login',(exports) ->
+define 'widgets/login',(exports) ->
   exports.ui_options=
     title:'Log In'
     modal:true
@@ -8,7 +8,7 @@ define 'login',(exports) ->
 
   exports.initialize=(dlg,options) ->
     dlg.find('.login-button').button().click ->
-      options:callback dlg,dlg.get('username'),dlg.get('password')
+      options.callback dlg,dlg.get('username'),dlg.get('password')
 
     dlg.error=(text) ->
       dlg.find('.login-error').html text

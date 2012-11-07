@@ -156,7 +156,7 @@ auth.on_logout (user) ->
 
 app.get '/api/chat/add_room',auth.verify,(req,res,next) ->
   if exports.create_room req.query.name,[auth.current_user(req).name]
-    res.send 200
+    res.send {}
   else
     next 'Room '+req.query.name+' already exists'
 
@@ -167,7 +167,7 @@ app.get '/api/chat/remove_room',auth.verify,(req,res,next) ->
 
   if auth.current_user(req).name==room.admin()
     exports.remove_room req.query.name
-    res.send 200
+    res.send {}
   else
     next 'You are not the administrator of room '+req.query.name
 

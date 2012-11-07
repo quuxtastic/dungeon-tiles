@@ -1,4 +1,4 @@
-define 'chat-rooms','jquery','server','ui','util',(exports,$,srv,ui,util) ->
+define 'widgets/chat-rooms','jquery','server','ui','util',(exports,$,srv,ui,util) ->
   exports.ui_options=
     modal:false
     can_close:false
@@ -52,3 +52,5 @@ define 'chat-rooms','jquery','server','ui','util',(exports,$,srv,ui,util) ->
             create_window 'chat-box',{name:name},(wnd) ->
               room_windows[name]=wnd
             refresh()
+
+    dlg.room=(name) -> room_windows[name]
