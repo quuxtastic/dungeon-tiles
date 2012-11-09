@@ -2,9 +2,7 @@ socket=require './socket'
 client=require './client'
 auth=require './auth'
 core=require '../core'
-
-app=core.app()
-server=core.server()
+api=require './api'
 
 class Room
   constructor: (@room_name,do_auth=true) ->
@@ -154,13 +152,13 @@ auth.on_login (user) ->
 auth.on_logout (user) ->
   exports.remove_room 'private/'+user.name
 
-app.get '/api/chat/add_room',auth.verify,(req,res,next) ->
+api.get '/api/chat/add_room',(req,res,next) ->
   if exports.create_room req.query.name,[auth.current_user(req).name]
     res.send {}
   else
     next 'Room '+req.query.name+' already exists'
 
-app.get '/api/chat/remove_room',auth.verify,(req,res,next) ->
+api.get '/api/chat/remove_room',(req,res,next) ->
   room=rooms[req.query.name]
   if not room?
     next 'Unknown room '+req.query.name
@@ -171,7 +169,7 @@ app.get '/api/chat/remove_room',auth.verify,(req,res,next) ->
   else
     next 'You are not the administrator of room '+req.query.name
 
-app.get '/api/chat/list',auth.verify,(req,res,next) ->
+api.get '/api/chat/list',(req,res,next) ->
   res.send exports.rooms
 
 client.register 'chat'

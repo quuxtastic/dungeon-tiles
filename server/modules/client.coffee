@@ -10,8 +10,6 @@ init_modules=[]
 exports.register=(name) ->
   init_modules.push name
 
-
-
 app.get '/api/load/init',(req,res,next) ->
   res.set 'Content-Type','text/javascript'
   res.send "define('init','"+init_modules.join("','")+"',null);\n"
