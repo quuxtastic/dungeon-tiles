@@ -1,6 +1,11 @@
 bcrypt=require 'bcrypt'
 express=require 'express'
 core=require '../core'
+cookie_utils=require 'cookie'
+
+SESSION_ID='dungeon-tiles.sid'
+AUTH_USERNAME_COOKIE='auth.username'
+AUTH_REDIRECT_COOKIE='auth.verify-trampoline'
 
 server=core.server()
 app=core.app()
@@ -36,45 +41,58 @@ exports.on_login=(callback) ->
 exports.on_logout=(callback) ->
   logout_listeners.push callback
 
-app.post '/api/login',(req,res,next) ->
+app.get '/login',(req,res,next) ->
+  error=(if not req.query.error or req.query.error=='' then '' else error)
+  res.render 'login.html',{error:error}
+
+app.post '/authenticate',(req,res,next) ->
   if not req.body.username? or not req.body.password?
     next 'Request body missing credentials'
 
   check_valid_credentials req.body.username,req.body.password,(err) ->
-    if err
-      next err
-    else
+    if not err
       req.session.user=req.body.username
+      res.cookie AUTH_USERNAME_COOKIE,req.session.user
       for callback in login_listeners
-        callback exports.current_user(req)
-      res.send {}
+        callback exports.current_user req
 
-app.get '/api/logout',exports.verify,(req,res,next) ->
+      refer=res.cookies.get(AUTH_REDIRECT_COOKIE) ? '/'
+      res.cookies.set AUTH_REDIRECT_COOKIE,null
+      res.redirect(refer)
+    else
+      res.redirect '/login?error='+encodeURI(err)
+
+app.get '/logout',exports.verify,(req,res,next) ->
   for callback in logout_listeners
     callback exports.current_user(req)
   req.session.destroy()
-  res.send {}
+  res.cookies.set AUTH_USERNAME_COOKIE,null
+  res.redirect('/login')
 
 check_valid_session=(credentials,callback) ->
   valid=credentials? and credentials.user?
   if valid
     callback?()
   else
-    callback?('Session missing authentication information')
+    callback?('You need to log in')
 
   return valid
 
 exports.verify=(req,res,next) ->
-  check_valid_session req.session,next
+  check_valid_session req.session,(err) ->
+    if err
+      res.cookies.set AUTH_REDIRECT_COOKIE,req.url
+      res.redirect '/login?error='+encodeURI(err)
+    else
+      next()
 
 exports.authenticate_websocket=(handshake,callback) ->
   # we need to manually extract the session data from the cookie
-  cookie=handshake.headers.cookie
-  if not cookie?
+  if not handshake.headers.cookie?
     callback 'Handshake headers missing session cookie'
   else
-    cookie=express.utils.parseCookie handshake,cookie
-    handshake.sessionID=cookie['dungeon-tiles.sid']
+    cookie=cookie_utils.parse handshake.headers.cookie
+    handshake.sessionID=decodeURI cookie[SESSION_ID]
 
     app.get('session-store').get handshake.sessionID,(err,session) ->
       if err

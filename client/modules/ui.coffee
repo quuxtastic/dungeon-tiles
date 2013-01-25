@@ -18,9 +18,12 @@ define 'ui','jquery','store','util','server',(exports,$,store,util,srv) ->
           height:'auto'
           position:'center'
 
-      if opts.show_in_window_list
-        @_dlg.on 'close', -> exports.window('window_list').remove this
-        @_dlg.on 'open', -> exports.window('window_list').add this,opts.title
+          open: ->
+            if opts.show_in_window_list
+              exports.window('window_list').add this,opts.title
+          close: ->
+            if opts.show_in_window_list
+              exports.window('window_list').remove this
 
       if opts.save_state
         prefs=store.local.ns 'ui.prefs.window.'+@_module.name
@@ -76,7 +79,7 @@ define 'ui','jquery','store','util','server',(exports,$,store,util,srv) ->
           f wnd
     else
       require 'widgets/'+widget_name,(widget) ->
-        srv.html '/widgets/'+widget_name+'.html',(html) ->
+        srv.html '/api/view/widgets/'+widget_name,(html) ->
           widget._html=html
           widget_cache[widget_name]=widget
           wnd=new Window widget,mixin_options
@@ -93,16 +96,14 @@ define 'ui','jquery','store','util','server',(exports,$,store,util,srv) ->
         on_create[name]=[]
       on_create[name].push callback
 
-  exports.message=(title,message,icon_type,close_callback) ->
-    opts=
+  exports.message=(title,icon_type,message,args...) ->
+    exports.create_window 'message-dialog',
       title:title
       icon:icon_type
-      message:message
-      on_close:close_callback
-    exports.create_window 'message-dialog',opts
+      message:strf message,args...
 
-  exports.error=(title,message,close_callback) ->
-    exports.message title,message,'ui-icon-alert',close_callback
+  exports.error=(title,message,args...) ->
+    exports.message title,'ui-icon-alert',message,args...
 
   exports.prompt=(title,message,fields,can_cancel=true,callback) ->
     opts=

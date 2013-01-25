@@ -1,4 +1,4 @@
-define 'store',(exports) ->
+define 'store','jquery','jquery.cookie',(exports,$) ->
   class Store
     constructor: (@storage) ->
 
@@ -19,5 +19,10 @@ define 'store',(exports) ->
 
     clear: -> @storage.clear()
 
-  exports.session=new Store window.sessionStorage
+  exports.session=new Store
+    getItem:(key) -> $.cookie key
+    setItem:(key,value) -> $.cookie key,value
+    removeItem:(key) -> $.clearCookie key,null
+    clear: ->
+
   exports.local=new Store window.localStorage

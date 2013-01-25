@@ -1,12 +1,11 @@
-define 'socket','socket.io','auth',(exports,io,auth) ->
+define 'socket','socket.io',(exports,io,auth) ->
   class Socket
     constructor: (namespace,create_callback) ->
-      auth.login ->
-        @socket=io.connect location.protocol+'//'+location.hostname+'/'+namespace
-        @socket.on 'error',(err) ->
-          create_callback null,err
-        @socket.on 'connect', ->
-          create_callback, this
+      @socket=io.connect location.protocol+'//'+location.hostname+'/'+namespace
+      @socket.on 'error',(err) ->
+        create_callback null,err
+      @socket.on 'connect', ->
+        create_callback this
 
     send: (msg,data) -> @socket.emit msg,data
     on: (msg,callback) -> @socket.on msg,callback

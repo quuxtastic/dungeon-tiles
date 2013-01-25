@@ -6,34 +6,43 @@ define 'widgets/chat-rooms','jquery','server','ui','util',(exports,$,srv,ui,util
     show_in_window_list:true
 
   exports.initialize=(dlg,options) ->
+    console.log 'Started: chat-rooms'
     room_list=dlg.find('.chat-rooms-list').menu().on 'select',(item) ->
       wnd=item.data 'chat_box_window'
+      wnd.connect()
       wnd.open()
       wnd.focus()
 
     room_windows={}
 
-    refresh= ->
-      srv.get_auth 'chat/list',(rooms) ->
-        room_list.clear()
+    refresh=(callback) ->
+      srv.get 'chat/list',(rooms) ->
+        room_list.empty()
 
         for room in rooms
           if not room_windows[room]?
             ui.create_window 'chat-box',{name:room},(wnd) ->
               room_windows[room]=wnd
+              wnd.connect()
               wnd.open()
           else
-            room_windows[room].open()
+            wnd=room_windows[room]
+            wnd.connect()
+            wnd.open()
 
         for room,wnd in room_windows
           if room not in rooms and room_windows[room]?
-            room_windows[room].close()
+            wnd=room_windows[room]
+            wnd.close()
+            wnd.disconnect()
             delete room_windows[room]
 
         for room,wnd of room_windows
           $('<li>'+room+'</li>')
             .data 'chat_box_window',wnd
             .appendTo room_list
+
+        callback?()
 
     util.interval 1000,refresh
 
@@ -48,9 +57,10 @@ define 'widgets/chat-rooms','jquery','server','ui','util',(exports,$,srv,ui,util
           if response.error?
             dlg.find('.prompt-errors').html resonse.error
           else
-            dlg.close()
             create_window 'chat-box',{name:name},(wnd) ->
               room_windows[name]=wnd
-            refresh()
+              wnd.connect()
+              wnd.open()
+            refresh -> dlg.close()
 
     dlg.room=(name) -> room_windows[name]

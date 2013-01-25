@@ -15,12 +15,11 @@ define 'util',(exports) ->
   exports.stop_interval=(id) ->
     clearInterval id
 
-  exports.printf=(s,args...) ->
+  exports.strf=(s,args...) ->
     cur_arg=0
-    s.replace '%s', -> args[cur_arg++]
-
-  exports.format=(s,args) ->
-    s.replace /%(\w+)%/,(match,name) -> args[name]
+    s.replace /%(\w)/g,(match,type) ->
+      arg=args[cur_arg++] ? 'undefined'
+      return arg.toString()
 
   uid_counter=0
   exports.uid= -> uid_counter++
@@ -33,3 +32,8 @@ define 'util',(exports) ->
           out[k]=v
 
     return out
+
+  exports.copy=(src,dest) ->
+    for k,v of src
+      if src.hasOwnProperty k
+        dest[k]=v

@@ -1,36 +1,33 @@
 define 'server','jquery',(exports,$) ->
-  exports.request=(name,method,content_type,args=null,catch_errors=true,callback) ->
+  exports.request=(name,method,content_type,args=null,callback) ->
     $.ajax
       url:name
       dataType:content_type
       data:args
       type:method
       success:(response) ->
-        if catch_errors and response.server_error
+        if exports.catch_api_errors and response.error
+          log.error 'API error %s(%s)\n%s',url,args,response.error
           require 'ui',(ui) ->
-            ui.error 'Error in '+url,response.server_error
-        else
-          callback?(response)
+            ui.error 'Error','Error calling %s(%s)<br><br>%s',url,args,response.error
+
+        callback?(response.error,response)
+
       error:(xhr,text_status,err) ->
-        if catch_errors
+        if exports.catch_transport_errors
+          log.error 'Ajax error %s(%s)\n%s: %s',url,args,text_status,err
           require 'ui',(ui) ->
-            ui.error 'Communication error',text_status
-        else
-          callback?(null,text_status)
+            ui.error 'Communication error','%s(%s) returned %s<br><br>%s',url,args,text_status,err
 
-  exports.request_auth=(name,method,content_type,args=null,catch_errors=true,callback) ->
-    require 'auth',(auth) ->
-      auth.login -> exports.request name,method,content_type,args,catch_errors,callback
+        callback?(err)
 
-  exports.html=(name,callback) ->
-    exports.request name,'GET','text',null,true,callback
+  exports.html=(name,args=null,callback) ->
+    exports.request name,'GET','text',args,callback
 
-  exports.get=(name,args=null,catch_errors=true,callback) ->
-    exports.request '/api/'+name,'GET','json',args,catch_errors,callback
-  exports.get_auth=(name,args=null,catch_errors=true,callback) ->
-    exports.request_auth '/api/'+name,'GET','json',args,catch_errors,callback
+  exports.get=(name,args=null,callback) ->
+    exports.request '/api/'+name,'GET','json',args,callback
+  exports.post=(name,args=null,callback) ->
+    exports.request '/api/'+name,'POST','json',args,callback
 
-  exports.post=(name,args=null,catch_errors=true,callback) ->
-    exports.request '/api/'+name,'POST','json',args,catch_errors,callback
-  exports.post_auth=(name,args=null,catch_errors=true,callback) ->
-    exports.request_auth '/api/'+name,'POST','json',args,catch_errors,callback
+  exports.catch_transport_errors=true
+  exports.catch_api_errors=true

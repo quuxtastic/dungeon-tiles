@@ -11,17 +11,20 @@ define 'widgets/chat-box','jquery','socket',(exports,$,socket) ->
 
     channel=null
 
-    dlg.on 'open', ->
-      channel=socket.socket 'chat/'+options.name,(conn) ->
-        conn.on 'say',(data) ->
-          $('<li><b>'+data.origin+'</b>: '+data.text+'</li>')
-            .appendTo chat_messages
-        conn.on 'whisper',(data) ->
-          $('<li><i>'+data.origin+': '+data.text+'</i></li>')
-            .appendTo chat_messages
+    dlg.connect= ->
+      if not channel?
+        channel=socket.socket 'chat/'+options.name,(conn) ->
+          conn.on 'say',(data) ->
+            $('<li><b>'+data.origin+'</b>: '+data.text+'</li>')
+              .appendTo chat_messages
+          conn.on 'whisper',(data) ->
+            $('<li><i>'+data.origin+': '+data.text+'</i></li>')
+              .appendTo chat_messages
 
-    dlg.on 'close', ->
-      channel.close()
+    dlg.disconnect= ->
+      if channel?
+        channel.close()
+        channel=null
 
     dlg.say=(text) ->
       if text? and text!=''
